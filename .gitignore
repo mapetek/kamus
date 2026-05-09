@@ -1,0 +1,36 @@
+# Xcode
+.DS_Store
+*.xcodeproj/
+xcuserdata/
+*.xcworkspace/
+DerivedData/
+
+# Swift Package Manager
+.build/
+*.xcodeproj
+*.playground
+
+# Build artifacts
+build/
+dist/
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.app
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Misc
+.env
+.env.local
