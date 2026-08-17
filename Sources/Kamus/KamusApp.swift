@@ -70,9 +70,12 @@ final class GlobalHotKeyListener {
             let flags = event.flags.intersection([.maskCommand, .maskAlternate, .maskControl, .maskShift])
             if keyCode == listener.expectedKeyCode && flags == listener.requiredFlags {
                 listener.onTrigger?()
+                // Olayı tüket: aksi hâlde kısayol öndeki uygulamaya da ulaşır ve
+                // orada karşılığı olmadığı için sistem uyarı sesi çalar.
+                return nil
             }
         }
-        
+
         return Unmanaged.passUnretained(event)
     }
     
@@ -628,7 +631,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func closePopover(_ sender: Any?) {
-        popover?.performClose(sender)
+        // performClose() animasyonlu ve delege tarafından reddedilebilir; bu sürede
+        // isShown true kaldığı için bir sonraki kısayol basışı "kapat" sanılıyordu.
+        // close() durumu anında ve kesin olarak günceller.
+        popover?.close()
     }
     
     func setupGlobalShortcut() {
@@ -647,7 +653,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if globalHotKeyListener.start(keyCode: keyCode, modifiers: required) {
             return
         }
-        
+
         globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return }
             if self.matchesShortcut(event: event, keyCode: keyCode, modifiers: required) {
@@ -674,14 +680,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard event.keyCode == keyCode else { return false }
         let current = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let relevant: NSEvent.ModifierFlags = [.command, .option, .control, .shift]
-        
+        guard current.intersection(relevant) == modifiers.intersection(relevant) else { return false }
+
+        // Debounce yalnızca gerçekten eşleşen basışlar için işletilir. Aksi hâlde
+        // arama kutusuna sade "l" yazmak zaman damgasını güncelleyip hemen ardından
+        // gelen gerçek kısayolu yutuyordu.
         let now = Date().timeIntervalSinceReferenceDate
-        if now - lastHotkeyFire < 0.25 {
-            return false
-        }
+        guard now - lastHotkeyFire >= 0.25 else { return false }
         lastHotkeyFire = now
-        
-        return current.intersection(relevant) == modifiers.intersection(relevant)
+        return true
     }
     
     private func removeShortcutMonitors() {
