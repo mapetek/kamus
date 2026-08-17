@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# TDK Dictionary Build Script
+# Kâmus Build Script
 # This script builds the macOS app and creates an app bundle
 
 set -e
 
-echo "🔨 Building TDK Dictionary..."
+echo "🔨 Kâmus derleniyor..."
 
 # Clean previous build artifacts to avoid stale module cache issues
 rm -rf .build
@@ -18,7 +18,7 @@ echo ""
 echo "📦 Creating app bundle..."
 
 # Create app bundle structure
-APP_NAME="TDKDictionary"
+APP_NAME="Kamus"
 APP_BUNDLE="${APP_NAME}.app"
 CONTENTS_DIR="${APP_BUNDLE}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
@@ -36,6 +36,13 @@ cp ".build/release/${APP_NAME}" "${MACOS_DIR}/"
 
 # Copy Info.plist
 cp "Sources/${APP_NAME}/Info.plist" "${CONTENTS_DIR}/"
+
+# Copy the app icon (regenerate with: python3 scripts/make_icon.py)
+if [ -f "Resources/AppIcon.icns" ]; then
+    cp "Resources/AppIcon.icns" "${RESOURCES_DIR}/"
+else
+    echo "⚠️  Resources/AppIcon.icns yok; uygulama genel ikonla görünecek."
+fi
 
 # Make executable
 chmod +x "${MACOS_DIR}/${APP_NAME}"

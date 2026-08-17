@@ -2,19 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "TDKDictionary",
-    platforms: [
-        .macOS(.v12)
-    ],
+    name: "Kamus",
+    platforms: [ .macOS(.v12) ],
     products: [
-        .executable(name: "TDKDictionary", targets: ["TDKDictionary"])
+        .executable(name: "Kamus", targets: ["Kamus"])
     ],
     targets: [
         .executableTarget(
-            name: "TDKDictionary",
+            name: "Kamus",
             dependencies: [],
             path: "Sources",
-            exclude: ["TDKDictionary/Info.plist", "TDKDictionary/TDKDictionary.entitlements"]
+            exclude: ["Kamus/Info.plist", "Kamus/Kamus.entitlements"]
         )
     ]
 )

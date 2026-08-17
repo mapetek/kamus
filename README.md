@@ -1,140 +1,85 @@
-# TDK Dictionary - macOS Menubar App
+<p align="center">
+  <img src="Resources/AppIcon-preview.png" width="128" alt="Kâmus">
+</p>
 
-A lightweight, native macOS menubar application that provides instant access to Turkish word definitions from TDK Sözlük (Türk Dil Kurumu).
+<h1 align="center">Kâmus</h1>
 
-## Features
+<p align="center">
+  macOS menü çubuğundan anında Türkçe sözlük araması.<br>
+  Aradığınız her kelimeyi yerel veritabanına kaydeder — zamanla kendi çevrimdışı sözlüğünüz oluşur.
+</p>
 
-- **Menubar Integration**: Lives in your macOS menubar for quick access
-- **Global Keyboard Shortcut**: Press `⌥⇧D` (Option+Shift+D) to open/close instantly
-- **Real-time Search**: Query words from the official TDK dictionary
-- **Rich Results**: Display meanings, examples, part of speech, and compound words
-- **Native SwiftUI Interface**: Beautiful, responsive macOS design
-- **No API Key Required**: Uses the public TDK API endpoint
+---
 
-## System Requirements
+## Özellikler
 
-- macOS 12.0 or later
-- Xcode 13.0 or later (for building)
+- **Menü çubuğundan anında erişim** — Dock'ta yer kaplamaz, `⌃⌘L` ile her yerden açılır.
+- **Seçili kelimeyi otomatik arar** — herhangi bir uygulamada bir kelime seçip kısayola basın, tanımı doğrudan gelir.
+- **Yerel sözlük veritabanı** — her başarılı arama SQLite'a kaydedilir. Kayıtlı kelimeler anında açılır ve **internet olmadan da** çalışır; arka planda sessizce güncellenir.
+- **Değiştirilebilir kısayol** — ayarlar panelindeki kaydediciden istediğiniz kombinasyonu atayabilirsiniz.
+- **Türkçeye doğru davranır** — büyük/küçük harf dönüşümü `tr_TR` kurallarıyla yapılır, "Işık" ile "ışık" aynı kayda düşer.
+- **API anahtarı gerektirmez.**
 
-## Building the App
+## Kurulum
 
-### Option 1: Using Xcode
-
-1. Open Terminal and navigate to the project directory:
-   ```bash
-   cd /path/to/TDKDictionary
-   ```
-
-2. Create an Xcode project:
-   ```bash
-   swift package generate-xcodeproj
-   ```
-
-3. Open the generated project:
-   ```bash
-   open TDKDictionary.xcodeproj
-   ```
-
-4. In Xcode:
-   - Select the "TDKDictionary" scheme
-   - Set the build target to "My Mac"
-   - Press `Cmd+B` to build
-   - Press `Cmd+R` to run
-
-### Option 2: Using Swift Package Manager (Command Line)
-
-1. Build the app:
-   ```bash
-   cd /path/to/TDKDictionary
-   swift build -c release
-   ```
-
-2. Run the app:
-   ```bash
-   swift run -c release TDKDictionary
-   ```
-
-### Option 3: Create an App Bundle
-
-To create a standalone `.app` bundle:
+Gereksinimler: macOS 12+, Xcode komut satırı araçları.
 
 ```bash
-cd /path/to/TDKDictionary
-swift build -c release
-mkdir -p TDKDictionary.app/Contents/MacOS
-mkdir -p TDKDictionary.app/Contents/Resources
-cp .build/release/TDKDictionary TDKDictionary.app/Contents/MacOS/
-cp Sources/TDKDictionary/Info.plist TDKDictionary.app/Contents/Info.plist
+git clone https://github.com/mapetek/kamus.git
+cd kamus
+./build.sh
+cp -r Kamus.app /Applications/
+open /Applications/Kamus.app
 ```
 
-Then move `TDKDictionary.app` to `/Applications/`.
+`build.sh`, sisteminizde bir "Apple Development" sertifikası varsa uygulamayı onunla imzalar. Bu önemli: imza sabit kaldığı için verdiğiniz sistem izinleri her yeniden derlemede sıfırlanmaz. Sertifika yoksa ad-hoc imzaya düşer ve izinleri her derlemeden sonra yeniden vermeniz gerekir.
 
-## Usage
+## İzinler
 
-1. **Launch the App**: Run the application (it will hide from the dock and appear in the menubar)
-2. **Click the Menubar Icon**: Click the book icon (📖) in the top-right corner of your screen
-3. **Search**: Type a Turkish word in the search field
-4. **View Results**: See meanings, examples, and word properties instantly
-5. **Global Shortcut**: Press `⌥⇧D` anytime to toggle the search window
+Uygulama iki sistem izni ister; ikisi de **isteğe bağlıdır**, vermezseniz uygulama çalışmaya devam eder:
 
-## Architecture
+| İzin | Ne için | Verilmezse |
+|---|---|---|
+| Erişilebilirlik | Başka uygulamalardaki seçili kelimeyi okumak | Kelimeyi elle yazarsınız |
+| Input Monitoring | Global kısayolu her uygulamada yakalamak | Kısayol yalnızca uygulama öndeyken çalışır |
 
-### Main Components
+İzinler System Settings → Privacy & Security altından verilir; ayarlar panelindeki **Ayarları Aç** düğmesi doğrudan oraya götürür.
 
-- **TDKDictionaryApp.swift**: Application entry point, menubar setup, and global shortcut handling
-- **SearchView.swift**: Main UI with search field and results display
-- **TDKAPIClient.swift**: API client for querying the TDK endpoint
+> **İzni verdiğiniz hâlde "gerekli" görünüyorsa:** macOS izin kaydını uygulamanın kod imzasına bağlar. Uygulama farklı bir imzayla yeniden derlenip kurulduğunda eski kayıt geçersiz kalır ama listedeki anahtar açık görünmeye devam eder. Çözüm: listeden Kamus'u **"−" ile kaldırın**, uygulamayı yeniden başlatın ve izni bir kez daha verin.
 
-### API Integration
+## Kullanım
 
-The app queries the public TDK API endpoint:
+- `⌃⌘L` — pencereyi aç/kapat (ayarlardan değiştirilebilir).
+- Bir kelime seçip kısayola basın — seçili kelime otomatik aranır.
+- Menü çubuğundaki simgeye tıklayarak da açabilirsiniz.
+
+## Yerel veritabanı
+
+Her başarılı arama, TDK'dan gelen **ham yanıtla birlikte** şuraya kaydedilir:
+
 ```
-https://sozluk.gov.tr/gts?ara={word}
+~/Library/Application Support/Kamus/dictionary.sqlite
 ```
 
-Response includes:
-- Word definition and meaning
-- Examples of usage
-- Part of speech (noun, verb, adjective, etc.)
-- Compound words
-- Etymology information (when available)
+Ham yanıt saklandığı için uygulamanın bugün göstermediği alanlar da korunur. Biriktirdiklerinizi doğrudan sorgulayabilirsiniz:
 
-## Keyboard Shortcut
+```bash
+sqlite3 ~/Library/Application\ Support/Kamus/dictionary.sqlite \
+  "SELECT word, search_count, datetime(last_searched_at,'unixepoch','localtime') FROM words ORDER BY last_searched_at DESC LIMIT 20;"
+```
 
-The default global keyboard shortcut is **Option+Shift+D** (`⌥⇧D`).
+## Geliştirme
 
-To customize this, edit the `setupGlobalShortcut()` method in `TDKDictionaryApp.swift`:
-- Change `keyCode` to your preferred key (find key codes [here](https://stackoverflow.com/questions/3202629/where-can-i-find-a-list-of-mac-virtual-key-codes))
-- Modify `modifiers` to your preferred modifier keys
+```bash
+swift build          # hızlı derleme kontrolü
+./build.sh           # .app paketi üretir ve imzalar
+python3 scripts/make_icon.py   # uygulama ikonunu yeniden üretir (Pillow gerekir)
+```
 
-## Troubleshooting
+Kaynaklar `Sources/Kamus/` altında: `KamusApp.swift` (uygulama yaşam döngüsü, global kısayol, seçili metin okuma, ayarlar), `SearchView.swift` (arayüz ve arama modeli), `TDKAPIClient.swift` (API istemcisi ve veri modelleri), `DictionaryStore.swift` (SQLite katmanı).
 
-### App doesn't appear in menubar
-- Make sure the app is running (check Activity Monitor)
-- The app uses `.accessory` activation policy, so it won't appear in the dock
+## Lisans ve kaynak
 
-### Global shortcut not working
-- Check System Preferences > Security & Privacy > Accessibility to ensure the app has permission
-- Try restarting the app
+[MIT](LICENSE) lisansıyla dağıtılır.
 
-### Search results are empty
-- Check your internet connection
-- The TDK API might be temporarily unavailable
-
-## Future Enhancements
-
-- Search history
-- Favorite words
-- Dark mode support
-- Keyboard navigation
-- Word pronunciation
-- Multiple dictionary sources
-
-## License
-
-This project is provided as-is for personal use.
-
-## Credits
-
-- TDK (Türk Dil Kurumu) for the public dictionary API
-- Built with Swift and SwiftUI
+Kelime verileri Türk Dil Kurumu'nun herkese açık `sozluk.gov.tr` servisinden alınır. **Bu bir Türk Dil Kurumu ürünü değildir**; kurumla resmî bir bağı veya kurumun onayı yoktur. Tüm sözlük içeriğinin hakları Türk Dil Kurumu'na aittir.

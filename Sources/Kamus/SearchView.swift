@@ -245,7 +245,7 @@ struct SearchView: View {
                 Image(systemName: "book.fill")
                     .font(.title2)
                     .foregroundColor(.blue)
-                Text("TDK Sözlük")
+                Text("Kâmus")
                     .font(.headline)
                 Text("Bir kelime yazarak başlayın")
                     .font(.caption)

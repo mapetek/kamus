@@ -80,15 +80,32 @@ actor DictionaryStore {
         word.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(with: locale)
     }
 
+    /// Uygulama "TDKDictionary" adıyla dağıtıldığı dönemde biriken sözlük veritabanını
+    /// yeni klasöre taşır. Yeni klasör zaten varsa dokunulmaz — üzerine yazmak
+    /// kullanıcının biriktirdiği kelimeleri silerdi.
+    private func migrateLegacyDirectory(from legacy: URL, to destination: URL) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: legacy.path), !fm.fileExists(atPath: destination.path) else { return }
+        do {
+            try fm.moveItem(at: legacy, to: destination)
+            NSLog("DictionaryStore: eski sözlük veritabanı \(destination.path) konumuna taşındı")
+        } catch {
+            // Taşıma başarısızsa yeni boş veritabanıyla devam edilir; arama bozulmaz.
+            NSLog("DictionaryStore: eski veritabanı taşınamadı: \(error)")
+        }
+    }
+
     private func openIfNeeded() -> Bool {
         if db != nil { return true }
         if didAttemptOpen { return false }
         didAttemptOpen = true
         do {
-            let dir = try FileManager.default
+            let support = try FileManager.default
                 .url(for: .applicationSupportDirectory, in: .userDomainMask,
                      appropriateFor: nil, create: true)
-                .appendingPathComponent("TDKDictionary", isDirectory: true)
+            let dir = support.appendingPathComponent("Kamus", isDirectory: true)
+            migrateLegacyDirectory(from: support.appendingPathComponent("TDKDictionary",
+                                                                       isDirectory: true), to: dir)
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             let path = dir.appendingPathComponent("dictionary.sqlite").path
 

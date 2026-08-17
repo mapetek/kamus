@@ -13,6 +13,7 @@ DerivedData/
 # Build artifacts
 build/
 dist/
+Resources/AppIcon.iconset/
 
 # IDE
 .vscode/

@@ -4,7 +4,7 @@ import ApplicationServices
 import CoreGraphics
 
 extension Notification.Name {
-    static let shortcutChanged = Notification.Name("TDKDictionary.shortcutChanged")
+    static let shortcutChanged = Notification.Name("Kamus.shortcutChanged")
 }
 
 final class GlobalHotKeyListener {
@@ -347,7 +347,7 @@ struct SettingsView: View {
 
                     if showsStaleGrantHint && !isPermissionGranted {
                         Text("Sistem Ayarları'nda anahtar zaten açıksa izin kaydı eskimiş demektir: "
-                             + "listeden TDKDictionary'yi “−” ile kaldırıp uygulamayı yeniden başlatın.")
+                             + "listeden Kamus'u “−” ile kaldırıp uygulamayı yeniden başlatın.")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -441,7 +441,7 @@ struct SettingsView: View {
 }
 
 @main
-struct TDKDictionaryApp: App {
+struct KamusApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {
@@ -477,7 +477,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "book.fill", accessibilityDescription: "TDK Dictionary")
+            button.image = NSImage(systemSymbolName: "book.fill", accessibilityDescription: "Kâmus")
             button.action = #selector(togglePopover(_:))
             button.target = self
         }
@@ -611,7 +611,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "TDK Sözlük"
+            window.title = "Kâmus"
             window.isReleasedWhenClosed = false
             window.center()
             window.contentViewController = NSHostingController(

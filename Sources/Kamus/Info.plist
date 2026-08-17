@@ -5,13 +5,17 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>tr_TR</string>
     <key>CFBundleExecutable</key>
-    <string>TDKDictionary</string>
+    <string>Kamus</string>
     <key>CFBundleIdentifier</key>
-    <string>com.akif.tdk-dictionary</string>
+    <string>com.akif.kamus</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>TDK Dictionary</string>
+    <string>Kâmus</string>
+    <key>CFBundleDisplayName</key>
+    <string>Kâmus</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -20,9 +24,11 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
+    <key>LSUIElement</key>
+    <true/>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2024. All rights reserved.</string>
+    <string>Copyright © 2026 Mehmet Akif Petek. MIT License.</string>
 </dict>
 </plist>
