@@ -80,6 +80,6 @@ Kaynaklar `Sources/Kamus/` altında: `KamusApp.swift` (uygulama yaşam döngüs�
 
 ## Lisans ve kaynak
 
-[MIT](LICENSE) lisansıyla dağıtılır.
+[MIT](LICENSE) lisansıyla dağıtılır. © 2026 BakedApps.
 
 Kelime verileri Türk Dil Kurumu'nun herkese açık `sozluk.gov.tr` servisinden alınır. **Bu bir Türk Dil Kurumu ürünü değildir**; kurumla resmî bir bağı veya kurumun onayı yoktur. Tüm sözlük içeriğinin hakları Türk Dil Kurumu'na aittir.
