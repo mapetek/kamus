@@ -179,10 +179,7 @@ struct SearchView: View {
                     
                     Divider()
                     
-                    ScrollView {
-                        SettingsView()
-                    }
-                    .frame(maxHeight: 260)
+                    SettingsView()
                 }
                 .frame(width: 360)
                 .background(

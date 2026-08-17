@@ -13,7 +13,10 @@ final class GlobalHotKeyListener {
     private var expectedKeyCode: UInt16 = 0
     private var requiredFlags: CGEventFlags = []
     var onTrigger: (() -> Void)?
-    
+
+    /// Event tap kurulu mu; izin sonradan verildiğinde yeniden kurmak için kullanılır.
+    var isRunning: Bool { eventTap != nil }
+
     func start(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) -> Bool {
         stop()
         
@@ -240,80 +243,185 @@ struct KeyRecorderField: NSViewRepresentable {
     }
 }
 
+/// Sistem butonlarının bombeli/gölgeli bezeline karşılık düz, gölgesiz buton stili.
+struct SoftButtonStyle: ButtonStyle {
+    var prominent: Bool = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        Surface(configuration: configuration, prominent: prominent)
+    }
+
+    private struct Surface: View {
+        let configuration: ButtonStyleConfiguration
+        let prominent: Bool
+        @State private var isHovering = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(prominent ? Color.white : Color.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .fill(fill)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(Color(nsColor: .separatorColor).opacity(prominent ? 0 : 0.8),
+                                      lineWidth: 1)
+                )
+                .contentShape(Rectangle())
+                .onHover { isHovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: isHovering)
+                .animation(.easeOut(duration: 0.08), value: configuration.isPressed)
+        }
+
+        private var fill: Color {
+            if prominent {
+                return Color.accentColor.opacity(configuration.isPressed ? 0.75 : (isHovering ? 0.9 : 1))
+            }
+            if configuration.isPressed { return Color.primary.opacity(0.16) }
+            if isHovering { return Color.primary.opacity(0.10) }
+            return Color.primary.opacity(0.06)
+        }
+    }
+}
+
 struct SettingsView: View {
     @AppStorage("shortcutKeyCode") private var shortcutKeyCode: Int = ShortcutDefaults.keyCodeInt
     @AppStorage("shortcutModifiers") private var shortcutModifiers: Int = ShortcutDefaults.modifiersInt
     @State private var isRecording = false
-    
+    @State private var isPermissionGranted = InputMonitoringPermission.isTrusted()
+    @State private var showsStaleGrantHint = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Kısayol")
-                Spacer()
-            }
-            
-            HStack(spacing: 10) {
-                Button(action: { isRecording.toggle() }) {
-                    Text(isRecording ? "Dinleniyor…" : "Kısayol Ata")
-                }
-                
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                        )
-                    
-                    Text(isRecording ? "Tuşlara bas…" : shortcutDisplay)
-                        .font(.system(size: 12))
+        VStack(alignment: .leading, spacing: 16) {
+            section("Kısayol") {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        recorderField
+
+                        Button(isRecording ? "Dinleniyor…" : "Kısayol Ata") {
+                            isRecording.toggle()
+                        }
+                        .buttonStyle(SoftButtonStyle(prominent: isRecording))
+
+                        Button("Sıfırla", action: resetToDefault)
+                            .buttonStyle(SoftButtonStyle())
+                    }
+
+                    Text("En az bir modifier (⌃ ⌥ ⇧ ⌘) içeren kombinasyonlar kabul edilir.")
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(height: 28)
-                .overlay(
-                    KeyRecorderField(
-                        isRecording: $isRecording,
-                        onCommit: { keyCode, mods in
-                            shortcutKeyCode = Int(keyCode)
-                            shortcutModifiers = Int(mods.rawValue)
-                            NotificationCenter.default.post(name: .shortcutChanged, object: nil)
-                        },
-                        onCancel: {}
-                    )
-                )
-                
-                Button(action: resetToDefault) {
-                    Text("Sıfırla")
                 }
             }
-            
-            Text("Not: En az bir modifier (⌃/⌥/⇧/⌘) içeren kombinasyonları kabul eder.")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-            
-            HStack(spacing: 10) {
-                let allowed = InputMonitoringPermission.isTrusted()
-                Text(allowed ? "Global kısayol: izin verildi" : "Global kısayol: Input Monitoring izni gerekli")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Button("İzin İste") {
-                    _ = InputMonitoringPermission.request()
-                }
-                
-                Button("Ayarları Aç") {
-                    InputMonitoringPermission.openSystemSettings()
+
+            section("Global Kısayol İzni") {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(isPermissionGranted ? Color.green : Color.orange)
+                            .frame(width: 7, height: 7)
+                        Text(isPermissionGranted ? "Input Monitoring izni verildi"
+                                                 : "Input Monitoring izni gerekli")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+
+                    HStack(spacing: 8) {
+                        if !isPermissionGranted {
+                            Button("İzin İste") {
+                                _ = InputMonitoringPermission.request()
+                                refreshPermission()
+                                showsStaleGrantHint = !isPermissionGranted
+                            }
+                            .buttonStyle(SoftButtonStyle(prominent: true))
+                        }
+
+                        Button("Ayarları Aç") {
+                            InputMonitoringPermission.openSystemSettings()
+                        }
+                        .buttonStyle(SoftButtonStyle())
+                    }
+
+                    if showsStaleGrantHint && !isPermissionGranted {
+                        Text("Sistem Ayarları'nda anahtar zaten açıksa izin kaydı eskimiş demektir: "
+                             + "listeden TDKDictionary'yi “−” ile kaldırıp uygulamayı yeniden başlatın.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear(perform: refreshPermission)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // Kullanıcı System Settings'ten dönünce durum kendiliğinden tazelensin.
+            refreshPermission()
+        }
     }
-    
+
+    private func section<Content: View>(_ title: String,
+                                        @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+                .tracking(0.6)
+
+            content()
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color(nsColor: .separatorColor).opacity(0.6), lineWidth: 1)
+                )
+        }
+    }
+
+    private var recorderField: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(nsColor: .textBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .strokeBorder(isRecording ? Color.accentColor
+                                                  : Color(nsColor: .separatorColor),
+                                      lineWidth: isRecording ? 1.5 : 1)
+                )
+
+            Text(isRecording ? "Tuşlara bas…" : shortcutDisplay)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isRecording ? .secondary : .primary)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(height: 26)
+        .overlay(
+            KeyRecorderField(
+                isRecording: $isRecording,
+                onCommit: { keyCode, mods in
+                    shortcutKeyCode = Int(keyCode)
+                    shortcutModifiers = Int(mods.rawValue)
+                    NotificationCenter.default.post(name: .shortcutChanged, object: nil)
+                },
+                onCancel: {}
+            )
+        )
+        .animation(.easeOut(duration: 0.12), value: isRecording)
+    }
+
+    private func refreshPermission() {
+        isPermissionGranted = InputMonitoringPermission.isTrusted()
+    }
+
     private var shortcutDisplay: String {
         let mods = NSEvent.ModifierFlags(rawValue: UInt(shortcutModifiers))
         var s = ""
@@ -339,7 +447,7 @@ struct TDKDictionaryApp: App {
     var body: some Scene {
         Settings {
             SettingsView()
-                .frame(width: 520, height: 200)
+                .frame(width: 460)
         }
     }
 }
@@ -589,6 +697,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func reconfigureShortcut() {
         setupGlobalShortcut()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        // Input Monitoring izni uygulama çalışırken verilmiş olabilir; o durumda
+        // başlangıçta kurulamayan event tap'i yeniden kurmayı dene. Aksi hâlde
+        // kısayol, uygulama yeniden başlatılana kadar zayıf NSEvent yolunda kalır.
+        if !globalHotKeyListener.isRunning && InputMonitoringPermission.isTrusted() {
+            setupGlobalShortcut()
+        }
     }
 }
 
