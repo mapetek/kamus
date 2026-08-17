@@ -1,9 +1,14 @@
 import Foundation
 
+struct SearchResponse {
+    let results: [WordResult]
+    let raw: Data
+}
+
 struct TDKAPIClient {
     private static let baseURL = "https://sozluk.gov.tr"
-    
-    static func searchWord(_ word: String) async throws -> [WordResult] {
+
+    static func searchWord(_ word: String) async throws -> SearchResponse {
         // URL encode the word properly
         let encodedWord: String
         if let encoded = word.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
@@ -41,11 +46,16 @@ struct TDKAPIClient {
         do {
             let decoder = JSONDecoder()
             let results = try decoder.decode([WordResult].self, from: data)
-            return results
+            return SearchResponse(results: results, raw: data)
         } catch let decodingError as DecodingError {
-            // Print the raw data for debugging
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("API Response: \(jsonString.prefix(500))")
+            if let jsonObject = try? JSONSerialization.jsonObject(with: data),
+               let dict = jsonObject as? [String: Any] {
+                if let message = dict["error"] as? String, !message.isEmpty {
+                    return SearchResponse(results: [], raw: data)
+                }
+                if let message = dict["message"] as? String, !message.isEmpty {
+                    return SearchResponse(results: [], raw: data)
+                }
             }
             throw APIError.decodingError(decodingError)
         }
@@ -139,6 +149,7 @@ enum APIError: LocalizedError {
     case serverError(Int)
     case decodingError(Error)
     case networkError(Error)
+    case unexpectedResponse
     
     var errorDescription: String? {
         switch self {
@@ -156,6 +167,8 @@ enum APIError: LocalizedError {
             return "Veri işleme hatası: \(error.localizedDescription)"
         case .networkError(let error):
             return "Ağ hatası: \(error.localizedDescription)"
+        case .unexpectedResponse:
+            return "Beklenmeyen yanıt"
         }
     }
 }

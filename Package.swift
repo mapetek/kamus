@@ -14,7 +14,7 @@ let package = Package(
             name: "TDKDictionary",
             dependencies: [],
             path: "Sources",
-            exclude: ["TDKDictionary/Info.plist"]
+            exclude: ["TDKDictionary/Info.plist", "TDKDictionary/TDKDictionary.entitlements"]
         )
     ]
 )
